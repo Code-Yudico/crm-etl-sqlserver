@@ -1,0 +1,6 @@
+pandas>=2.2
+pyodbc>=5.1
+python-dotenv>=1.0
+tenacity>=8.2
+Faker>=30.0
+pytest>=8.0

@@ -1,0 +1,27 @@
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+
+# Generated data (synthetic, regenerate with scripts/generate_data.py)
+data/
+rejects/
+logs/
+*.csv
+*.xlsx
+*.xls
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.coverage
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

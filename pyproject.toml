@@ -1,0 +1,4 @@
+[tool.pytest.ini_options]
+# The tests import the package from the repository root.
+pythonpath = ["."]
+testpaths = ["tests"]
