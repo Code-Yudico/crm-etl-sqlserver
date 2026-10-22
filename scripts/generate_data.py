@@ -11,7 +11,7 @@ with them:
 * Spanish headers with accents, percent signs, dots and spaces.
 * Durations written as HH:MM:SS rather than as numbers.
 * A "-" placeholder instead of an empty cell.
-* A few malformed rows, so the reject path is exercised on every run.
+* A trailing totals row with no agent id, so the reject path runs every time.
 
     python scripts/generate_data.py --date 2026-10-19 --agents 40
 """
@@ -168,25 +168,28 @@ def state_rows(agents: list[dict], report_date: date) -> list[list]:
     return rows
 
 
-def add_malformed_rows(rows: list[list], headers: list[str]) -> list[list]:
-    """Insert the kind of broken rows the real export produced.
+def add_source_quirks(rows: list[list], headers: list[str]) -> list[list]:
+    """Reproduce two quirks of the real export.
 
-    They are what the reject file is for: the pipeline should load everything
-    else and say exactly which rows it could not use.
+    The placeholder is edited into an existing row rather than added as a new
+    one, because the report holds exactly one row per agent and interval. The
+    totals row is appended: it is the footer the export ends with, it has no
+    agent behind it, and the pipeline must reject it instead of loading it as
+    an agent.
     """
-    if len(rows) < 2:
+    if not rows:
         return rows
 
-    missing_id = list(rows[0])
-    missing_id[headers.index("ID")] = ""
-
-    placeholder = list(rows[1])
+    # The export writes "-" rather than leaving a duration cell empty.
     for index, header in enumerate(headers):
         if header.startswith(("Tiempo", "T.")):
-            placeholder[index] = "-"
+            rows[min(1, len(rows) - 1)][index] = "-"
             break
 
-    return rows + [missing_id, placeholder]
+    totals = [""] * len(headers)
+    totals[headers.index("Agente")] = "Total"
+    totals[headers.index("Fecha")] = rows[0][headers.index("Fecha")]
+    return rows + [totals]
 
 
 def write_csv(path: Path, headers: list[str], rows: list[list]) -> None:
@@ -222,12 +225,12 @@ def main() -> None:
     write_csv(
         args.out / f"agent_behavior_{stamp}.csv",
         BEHAVIOR_HEADERS,
-        add_malformed_rows(behavior_rows(agents, args.date), BEHAVIOR_HEADERS),
+        add_source_quirks(behavior_rows(agents, args.date), BEHAVIOR_HEADERS),
     )
     write_csv(
         args.out / f"agent_states_{stamp}.csv",
         STATE_HEADERS,
-        add_malformed_rows(state_rows(agents, args.date), STATE_HEADERS),
+        add_source_quirks(state_rows(agents, args.date), STATE_HEADERS),
     )
 
 
