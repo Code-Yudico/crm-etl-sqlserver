@@ -104,7 +104,30 @@ python -m src.pipeline
 
 The pipeline creates the database and the tables if they are missing, so there is nothing to set up by hand.
 
-To confirm it is idempotent, run it twice and compare:
+Here is what a second run over the same date looks like. Replaced rows equal inserted rows, which is the proof that nothing is duplicated:
+
+```
+STAGE 2: TRANSFORM
+Read agent_behavior_2026-10-19.csv (26 rows, 22 columns, utf-8-sig)
+WARNING - agent_behavior: 1 row(s) rejected before load
+agent_behavior: 25 row(s) ready to load
+Read agent_states_2026-10-19.csv (251 rows, 32 columns, utf-8-sig)
+WARNING - agent_operational_states: 1 row(s) rejected before load
+agent_operational_states: 250 row(s) ready to load
+STAGE 3: LOAD
+Database 'crm_etl_demo' already exists
+Destination tables verified
+  agent_behavior: 25 existing row(s) removed for 1 date(s)
+  agent_behavior: 25 row(s) inserted
+  agent_operational_states: 250 existing row(s) removed for 1 date(s)
+  agent_operational_states: 250 row(s) inserted
+CRM ETL - completed in 0.14s
+  agent_behavior: 25 inserted, 25 replaced, 0 failed
+  agent_operational_states: 250 inserted, 250 replaced, 0 failed
+  2 row(s) rejected, see rejects/
+```
+
+The two rejected rows are the totals line each report ends with: it belongs to no agent, so it is set aside with its reason instead of loaded. To check against the database:
 
 ```sql
 SELECT report_date, COUNT(*) FROM agent_behavior GROUP BY report_date;

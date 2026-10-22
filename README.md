@@ -104,7 +104,30 @@ python -m src.pipeline
 
 El pipeline crea la base y las tablas si no existen, así que no hay que preparar nada a mano.
 
-Para comprobar que es idempotente, córrelo dos veces y compara:
+Así se ve una segunda corrida sobre la misma fecha. Las filas reemplazadas igualan a las insertadas, que es la prueba de que no duplica:
+
+```
+STAGE 2: TRANSFORM
+Read agent_behavior_2026-10-19.csv (26 rows, 22 columns, utf-8-sig)
+WARNING - agent_behavior: 1 row(s) rejected before load
+agent_behavior: 25 row(s) ready to load
+Read agent_states_2026-10-19.csv (251 rows, 32 columns, utf-8-sig)
+WARNING - agent_operational_states: 1 row(s) rejected before load
+agent_operational_states: 250 row(s) ready to load
+STAGE 3: LOAD
+Database 'crm_etl_demo' already exists
+Destination tables verified
+  agent_behavior: 25 existing row(s) removed for 1 date(s)
+  agent_behavior: 25 row(s) inserted
+  agent_operational_states: 250 existing row(s) removed for 1 date(s)
+  agent_operational_states: 250 row(s) inserted
+CRM ETL - completed in 0.14s
+  agent_behavior: 25 inserted, 25 replaced, 0 failed
+  agent_operational_states: 250 inserted, 250 replaced, 0 failed
+  2 row(s) rejected, see rejects/
+```
+
+Las dos filas rechazadas son el renglón de totales con el que termina cada reporte: no corresponde a ningún agente, así que se aparta con su motivo en vez de cargarse. Para comprobarlo contra la base:
 
 ```sql
 SELECT report_date, COUNT(*) FROM agent_behavior GROUP BY report_date;
